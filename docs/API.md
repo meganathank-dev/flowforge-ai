@@ -101,14 +101,40 @@ Check server and database status.
 
 ---
 
-## Future Endpoints
+## Phase 1A: Security Foundation (No New Endpoints)
 
-The following endpoint groups are planned for future phases. They are **not yet implemented**.
+Phase 1A establishes the security foundation for authentication. **No new API endpoints were created in Phase 1A.**
+
+The following validation schemas have been prepared for Phase 1B:
+
+| Schema | Fields | Purpose |
+|--------|--------|---------|
+| `loginSchema` | email, password | Login request validation |
+| `passwordChangeSchema` | currentPassword, newPassword, confirmNewPassword | Password change validation |
+| `passwordResetRequestSchema` | email | Password reset initiation |
+| `passwordResetVerifySchema` | email, otp | OTP verification |
+| `passwordResetCompleteSchema` | email, otp, newPassword, confirmNewPassword | Password reset completion |
+| `registrationSchema` | employeeId, email, password | User registration |
+
+> These schemas exist in `server/src/validators/auth.validator.js` but are not wired to any routes yet.
+
+---
+
+## Future Endpoints (Phase 1B)
+
+The following endpoints are planned for Phase 1B. They are **not yet implemented**.
 
 - `POST /api/v1/auth/register`
 - `POST /api/v1/auth/login`
 - `POST /api/v1/auth/logout`
 - `POST /api/v1/auth/refresh-token`
+- `POST /api/v1/auth/change-password`
+- `POST /api/v1/auth/forgot-password`
+- `POST /api/v1/auth/verify-otp`
+- `POST /api/v1/auth/reset-password`
+
+## Future Endpoints (Phase 2+)
+
 - `GET /api/v1/users`
 - `GET /api/v1/projects`
 - `GET /api/v1/tasks`

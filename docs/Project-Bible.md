@@ -71,3 +71,40 @@ Even in the foundation phase, security best practices are followed:
 | Validation | Zod | Runtime validation, schema-first |
 | Logging | Winston | Structured logging, multiple transports |
 | Monorepo | npm workspaces | Simple, no extra tooling |
+
+## Phase 1A: Identity & Authentication Security Foundation
+
+Phase 1A establishes the **security foundation** required before authentication APIs can be implemented.
+
+> **Phase 1A does NOT implement authentication APIs.** Phase 1B will implement the actual login, registration, logout, JWT, and token endpoints.
+
+### What Phase 1A Includes
+
+| Component | Purpose |
+|-----------|---------|
+| Role constants | Five-tier RBAC: super_admin, organization_admin, project_manager, team_leader, employee |
+| Account status constants | Lifecycle states: pending, active, locked, suspended, deactivated |
+| Auth constants | Login attempt limits, lock duration, OTP config, bcrypt work factor |
+| Password utility | bcryptjs hashing, comparison, strength validation |
+| OTP utility | Cryptographically secure (node:crypto) numeric OTP generation |
+| User model | Identity/security Mongoose schema with indexes |
+| Password reset model | Foundation model with OTP hash and TTL index |
+| Session model | Foundation model for future session management |
+| Security event model | Audit logging model for security events |
+| Auth validators | Zod schemas for future auth operations |
+| User repository | Database access layer for user operations |
+| Auth service | Internal security logic (password verification, lock management) |
+| Security event service | Reusable service for recording security events |
+
+### Password Hashing Architecture
+
+- Uses **bcryptjs** with a work factor of 12
+- Plaintext passwords are **never stored or logged**
+- Password hash is excluded from default Mongoose queries (`select: false`)
+- Password hash is stripped from JSON serialization (`toJSON` transform)
+
+### Repository/Service Separation
+
+- **Repository layer** encapsulates all Mongoose queries
+- **Service layer** contains business logic without HTTP concerns
+- **Controllers** (Phase 1B) will be thin — delegating to services

@@ -51,16 +51,65 @@ Build the technical infrastructure required before any business features can be 
 
 ---
 
+## Phase 1A: Identity & Authentication Security Foundation (Current)
+
+### Scope
+
+Build the security foundation required before authentication APIs can be implemented.
+
+> **Phase 1A does NOT implement authentication APIs.** Those are in Phase 1B.
+
+### Security Foundation Requirements
+
+#### Constants
+- [x] User role definitions (5 roles)
+- [x] Account status definitions (5 states)
+- [x] Auth configuration constants (attempts, lock duration, OTP config)
+
+#### Utilities
+- [x] Password hashing with bcryptjs (hash, compare, strength validation)
+- [x] Cryptographically secure OTP generation (node:crypto)
+
+#### Models
+- [x] User identity model with security fields and indexes
+- [x] Password reset foundation model with TTL index
+- [x] Session foundation model with TTL index
+- [x] Security event audit model
+
+#### Validators
+- [x] Zod schemas for login, password change, password reset, registration
+
+#### Repository/Service Layer
+- [x] User repository (database access isolation)
+- [x] Auth service (internal security logic)
+- [x] Security event service (audit logging with metadata sanitization)
+
+#### Tests
+- [x] Password hashing and comparison tests
+- [x] OTP generation and format validation tests
+- [x] Password strength validation tests
+- [x] Auth validator schema tests
+
+### Constraints
+- No authentication routes or controllers
+- No JWT or token implementation
+- No login/registration/logout endpoints
+- No frontend authentication UI
+- bcryptjs is the only new dependency
+
+---
+
 ## Future Modules (Not Yet Implemented)
 
-The following modules are planned for future phases. They are listed here for awareness only — **none of these are implemented in Phase 0**.
+The following modules are planned for future phases. They are listed here for awareness only — **none of these are implemented in Phase 1A**.
 
-### Phase 1: Authentication & Authorization
-- Registration, login, logout
+### Phase 1B: Authentication APIs
+- Registration, login, logout endpoints
 - JWT access and refresh tokens
-- OTP verification
-- Password reset
-- Role-based access control
+- OTP verification endpoints
+- Password reset endpoints
+- Role-based access control middleware
+- Authentication frontend (login/registration screens)
 
 ### Phase 2: Core Business
 - Organization management

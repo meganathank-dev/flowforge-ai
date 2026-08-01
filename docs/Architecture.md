@@ -142,3 +142,63 @@ Component → Hook → Store → Service → API Client → Backend
 ## API Versioning
 
 All API endpoints are versioned under `/api/v1`. Future breaking changes will use `/api/v2`, etc.
+
+## Phase 1A: Security Foundation Architecture
+
+Phase 1A adds the security foundation layer without creating HTTP routes. The following components were added:
+
+### New Server Directories (Phase 1A)
+
+```
+server/src/
+├── constants/
+│   ├── index.js                    # Phase 0 — shared constants
+│   ├── roles.js                    # Phase 1A — user role definitions
+│   ├── account-status.js           # Phase 1A — account lifecycle states
+│   └── auth.constants.js           # Phase 1A — auth/security config
+├── models/
+│   ├── user.model.js               # Phase 1A — user identity model
+│   ├── password-reset.model.js     # Phase 1A — password reset foundation
+│   ├── session.model.js            # Phase 1A — session foundation
+│   └── security-event.model.js     # Phase 1A — security audit log
+├── validators/
+│   └── auth.validator.js           # Phase 1A — Zod auth schemas
+├── repositories/
+│   └── user.repository.js          # Phase 1A — user database access
+├── services/
+│   ├── auth.service.js             # Phase 1A — auth security logic
+│   └── security-event.service.js   # Phase 1A — security event service
+├── utils/
+│   ├── logger.js                   # Phase 0 — Winston logger
+│   ├── response.js                 # Phase 0 — response helpers
+│   ├── password.util.js            # Phase 1A — bcryptjs password utility
+│   └── otp.util.js                 # Phase 1A — OTP generation utility
+└── tests/
+    └── auth.test.js                # Phase 1A — auth foundation tests
+```
+
+### Security Data Flow (Phase 1A Foundation)
+
+```
+[Future Phase 1B Controller]
+        │
+        ▼
+   Auth Service          ←──── Password Utility (bcryptjs)
+        │                 ←──── Account Status Constants
+        ▼
+  User Repository         ←──── User Model (Mongoose)
+        │
+        ▼
+  Security Event Service  ←──── Security Event Model
+```
+
+### Model Architecture
+
+| Model | Purpose | Key Features |
+|-------|---------|-------------|
+| User | Identity & security | passwordHash (select: false), role, accountStatus, lock management |
+| PasswordReset | Password reset OTP | TTL index on expiresAt, hashed OTP only |
+| Session | Future session tokens | TTL auto-cleanup, hashed tokens only |
+| SecurityEvent | Audit trail | Sanitized metadata, timestamp index |
+
+> **Note:** Phase 1A models are foundations. No routes or APIs use them yet. Phase 1B will wire controllers and routes.
