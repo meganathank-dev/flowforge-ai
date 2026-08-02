@@ -155,3 +155,31 @@ export const updateLoginInfo = async (userId) => {
     { new: true },
   ).exec();
 };
+
+/**
+ * Create a new user document.
+ *
+ * Mongoose unique index violations (duplicate email or employeeId)
+ * will throw a MongoDB error code 11000, which is handled by
+ * the existing error middleware.
+ *
+ * @param {object} params
+ * @param {string} params.employeeId - Unique employee identifier
+ * @param {string} params.email - User's email address
+ * @param {string} params.passwordHash - Bcrypt hash of the password
+ * @param {string} [params.role] - User role (defaults to model default)
+ * @param {string} [params.accountStatus] - Account status
+ * @returns {Promise<object>} The created user document
+ */
+export const createUser = async ({ employeeId, email, passwordHash, role, accountStatus }) => {
+  const userData = {
+    employeeId,
+    email,
+    passwordHash,
+  };
+
+  if (role) userData.role = role;
+  if (accountStatus) userData.accountStatus = accountStatus;
+
+  return User.create(userData);
+};

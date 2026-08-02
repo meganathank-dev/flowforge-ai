@@ -43,7 +43,7 @@ The health check endpoint (`GET /api/v1/health`) exposes the current connection 
 - Soft delete pattern: `isDeleted: Boolean` + `deletedAt: Date`
 - References use `mongoose.Schema.Types.ObjectId`
 
-## Phase 1A Models (Implemented)
+## Phase 1 Models
 
 ### User Model (`user.model.js`)
 
@@ -55,7 +55,7 @@ Identity and security model for authentication.
 | `email` | String | Required, unique, lowercase, indexed |
 | `passwordHash` | String | Required, `select: false` — never in default queries |
 | `role` | String | Enum (ROLE_VALUES), default: `employee` |
-| `accountStatus` | String | Enum (ACCOUNT_STATUS_VALUES), default: `pending` |
+| `accountStatus` | String | Enum (ACCOUNT_STATUS_VALUES), default: `active` |
 | `failedLoginAttempts` | Number | Default: 0, min: 0 |
 | `lockedUntil` | Date | Null when not locked |
 | `lastLoginAt` | Date | Updated on successful login |
@@ -67,33 +67,37 @@ Identity and security model for authentication.
 
 ### Password Reset Model (`password-reset.model.js`)
 
-Foundation model for password reset operations. **Not yet used by any API.**
+Stores active password reset OTPs.
 
 | Field | Type | Notes |
 |-------|------|-------|
 | `user` | ObjectId (ref: User) | Required, indexed |
 | `otpHash` | String | Required — stores bcrypt hash, never raw OTP |
 | `expiresAt` | Date | Required, TTL index (auto-delete on expiry) |
-| `attempts` | Number | Default: 0, max: OTP_MAX_ATTEMPTS |
-| `used` | Boolean | Default: false |
+| `attempts` | Number | Default: 0, tracking failed verifications |
+| `used` | Boolean | Default: false, set to true after successful reset |
 
 **Indexes:** TTL on `expiresAt`, compound `{user, used}`
 
+**Security Note:** Only the bcrypt hash of the OTP is stored. The `used` field ensures the OTP cannot be used more than once. Failed attempts are incremented to prevent brute force.
+
 ### Session Model (`session.model.js`)
 
-Foundation model for future session/token management. **Not yet used by any API.**
+Stores active refresh token sessions.
 
 | Field | Type | Notes |
 |-------|------|-------|
 | `user` | ObjectId (ref: User) | Required, indexed |
-| `tokenHash` | String | Required — stores hash, never raw token |
-| `expiresAt` | Date | Required, TTL index |
-| `revokedAt` | Date | Null while active |
+| `tokenHash` | String | Required, unique, SHA-256 hash of the refresh token |
+| `expiresAt` | Date | Required, TTL index (auto-delete on expiry) |
+| `revokedAt` | Date | Null while active, set during logout/password change/rotation race |
 | `metadata.ipAddress` | String | Client IP |
 | `metadata.userAgent` | String | Client user agent |
 | `metadata.deviceType` | String | Device classification |
 
 **Indexes:** TTL on `expiresAt`, compound `{user, revokedAt}`
+
+**Security Note:** Only the SHA-256 hash of the refresh token is stored. The `revokedAt` field allows for token reuse detection without physically deleting the session until `expiresAt` triggers the TTL cleanup.
 
 ### Security Event Model (`security-event.model.js`)
 
@@ -102,7 +106,7 @@ Audit trail for security-related events.
 | Field | Type | Notes |
 |-------|------|-------|
 | `user` | ObjectId (ref: User) | Optional (nullable for unknown-user events) |
-| `eventType` | String | Enum: login_success, login_failed, account_locked, password_changed, password_reset_requested, password_reset_completed |
+| `eventType` | String | Enum: login_success, login_failed, account_locked, password_changed, password_reset_requested, password_reset_completed, registration, logout, token_reuse_detected, session_revoked, otp_verification_failed, otp_verified |
 | `ipAddress` | String | Client IP |
 | `userAgent` | String | Client user agent |
 | `metadata` | Mixed | Sanitized — no secrets ever persisted |

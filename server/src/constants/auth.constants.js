@@ -2,10 +2,7 @@
  * Authentication and security configuration constants.
  *
  * These values control security behavior such as account locking,
- * OTP generation, and password hashing.
- *
- * NOTE: This file does NOT include JWT configuration.
- *       JWT will be added in Phase 1B.
+ * OTP generation, password hashing, and token management.
  */
 
 /**
@@ -43,6 +40,12 @@ export const OTP_MAX_ATTEMPTS = 3;
 export const BCRYPT_SALT_ROUNDS = 12;
 
 /**
+ * Number of cryptographically random bytes for refresh tokens.
+ * Produces an 80-character hex string.
+ */
+export const REFRESH_TOKEN_BYTES = 40;
+
+/**
  * Security event types for audit logging.
  */
 export const SECURITY_EVENTS = Object.freeze({
@@ -52,6 +55,12 @@ export const SECURITY_EVENTS = Object.freeze({
   PASSWORD_CHANGED: 'password_changed',
   PASSWORD_RESET_REQUESTED: 'password_reset_requested',
   PASSWORD_RESET_COMPLETED: 'password_reset_completed',
+  REGISTRATION: 'registration',
+  LOGOUT: 'logout',
+  TOKEN_REUSE_DETECTED: 'token_reuse_detected',
+  SESSION_REVOKED: 'session_revoked',
+  OTP_VERIFICATION_FAILED: 'otp_verification_failed',
+  OTP_VERIFIED: 'otp_verified',
 });
 
 /**

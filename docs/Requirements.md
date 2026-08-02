@@ -97,25 +97,6 @@ Build the security foundation required before authentication APIs can be impleme
 - No frontend authentication UI
 - bcryptjs is the only new dependency
 
----
-
-## Future Modules (Not Yet Implemented)
-
-The following modules are planned for future phases. They are listed here for awareness only — **none of these are implemented in Phase 1A**.
-
-### Phase 1B: Authentication APIs
-- Registration, login, logout endpoints
-- JWT access and refresh tokens
-- OTP verification endpoints
-- Password reset endpoints
-- Role-based access control middleware
-- Authentication frontend (login/registration screens)
-
-### Phase 2: Core Business
-- Organization management
-- Employee management
-- Department / Team management
-- Project management
 - Task management
 
 ### Phase 3: Operations

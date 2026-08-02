@@ -103,10 +103,19 @@ export const passwordResetCompleteSchema = z
   });
 
 /**
- * Registration validation schema (for future use).
+ * Registration validation schema.
+ * Requires employeeId, email, password, and password confirmation.
  */
-export const registrationSchema = z.object({
-  employeeId: employeeIdField,
-  email: emailField,
-  password: passwordField,
-});
+export const registrationSchema = z
+  .object({
+    employeeId: employeeIdField,
+    email: emailField,
+    password: passwordField,
+    confirmPassword: z
+      .string({ required_error: 'Password confirmation is required' })
+      .min(1, 'Password confirmation is required'),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  });

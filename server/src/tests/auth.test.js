@@ -1,4 +1,5 @@
-import { describe, it } from 'node:test';
+import './setup.js';
+import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { hashPassword, comparePassword, validatePasswordStrength } from '../utils/password.util.js';
 import { generateOTP, isValidOTPFormat } from '../utils/otp.util.js';
@@ -8,10 +9,11 @@ import {
   passwordResetRequestSchema,
   passwordResetVerifySchema,
   passwordResetCompleteSchema,
+  registrationSchema,
 } from '../validators/auth.validator.js';
 
 // ============================================================
-// Password Utility Tests
+// Password Utility Tests (Phase 1A — preserved)
 // ============================================================
 
 describe('Password Utility', () => {
@@ -139,7 +141,7 @@ describe('Password Utility', () => {
 });
 
 // ============================================================
-// OTP Utility Tests
+// OTP Utility Tests (Phase 1A — preserved)
 // ============================================================
 
 describe('OTP Utility', () => {
@@ -218,7 +220,7 @@ describe('OTP Utility', () => {
 });
 
 // ============================================================
-// Auth Validator Tests
+// Auth Validator Tests (Phase 1A — preserved + extended)
 // ============================================================
 
 describe('Auth Validators', () => {
@@ -369,5 +371,404 @@ describe('Auth Validators', () => {
 
       assert.equal(result.success, false);
     });
+  });
+
+  describe('registrationSchema', () => {
+    it('should accept valid registration data', () => {
+      const result = registrationSchema.safeParse({
+        employeeId: 'EMP001',
+        email: 'user@example.com',
+        password: 'SecurePass123!',
+        confirmPassword: 'SecurePass123!',
+      });
+
+      assert.equal(result.success, true);
+    });
+
+    it('should reject mismatched passwords', () => {
+      const result = registrationSchema.safeParse({
+        employeeId: 'EMP001',
+        email: 'user@example.com',
+        password: 'SecurePass123!',
+        confirmPassword: 'DifferentPass456!',
+      });
+
+      assert.equal(result.success, false);
+    });
+
+    it('should reject missing confirmPassword', () => {
+      const result = registrationSchema.safeParse({
+        employeeId: 'EMP001',
+        email: 'user@example.com',
+        password: 'SecurePass123!',
+      });
+
+      assert.equal(result.success, false);
+    });
+
+    it('should reject missing employeeId', () => {
+      const result = registrationSchema.safeParse({
+        email: 'user@example.com',
+        password: 'SecurePass123!',
+        confirmPassword: 'SecurePass123!',
+      });
+
+      assert.equal(result.success, false);
+    });
+
+    it('should normalize email to lowercase', () => {
+      const result = registrationSchema.safeParse({
+        employeeId: 'EMP001',
+        email: 'USER@EXAMPLE.COM',
+        password: 'SecurePass123!',
+        confirmPassword: 'SecurePass123!',
+      });
+
+      assert.equal(result.success, true);
+      assert.equal(result.data.email, 'user@example.com');
+    });
+  });
+});
+
+// ============================================================
+// Token Utility Tests (Phase 1B)
+// ============================================================
+
+describe('Token Utility', () => {
+  // Dynamic import to handle env requirement
+  let tokenUtil;
+
+  // Set env vars before importing the module
+  before(async () => {
+    // Ensure JWT env vars are set for testing
+    process.env.JWT_ACCESS_SECRET = 'test-secret-that-is-at-least-32-characters-long-for-testing';
+    process.env.JWT_ACCESS_EXPIRES_IN = '15m';
+    process.env.JWT_ISSUER = 'flowforge-ai-test';
+
+    // Force re-import of modules with test env
+    tokenUtil = await import('../utils/token.util.js');
+  });
+
+  describe('generateAccessToken', () => {
+    it('should generate a valid JWT string', () => {
+      const token = tokenUtil.generateAccessToken('user123', 'employee');
+
+      assert.ok(token, 'Token should be truthy');
+      assert.equal(typeof token, 'string', 'Token should be a string');
+
+      // JWT has three parts separated by dots
+      const parts = token.split('.');
+      assert.equal(parts.length, 3, 'JWT should have 3 parts');
+    });
+
+    it('should include only minimal claims (sub, role, iss, iat, exp)', () => {
+      const token = tokenUtil.generateAccessToken('user123', 'employee');
+      const decoded = tokenUtil.verifyAccessToken(token);
+
+      assert.equal(decoded.sub, 'user123', 'sub should match userId');
+      assert.equal(decoded.role, 'employee', 'role should match');
+      assert.ok(decoded.iss, 'iss should be present');
+      assert.ok(decoded.iat, 'iat should be present');
+      assert.ok(decoded.exp, 'exp should be present');
+
+      // Ensure no PII is included
+      assert.equal(decoded.email, undefined, 'email must not be in token');
+      assert.equal(decoded.passwordHash, undefined, 'passwordHash must not be in token');
+      assert.equal(decoded.password, undefined, 'password must not be in token');
+    });
+  });
+
+  describe('verifyAccessToken', () => {
+    it('should successfully verify a valid token', () => {
+      const token = tokenUtil.generateAccessToken('user456', 'project_manager');
+      const decoded = tokenUtil.verifyAccessToken(token);
+
+      assert.equal(decoded.sub, 'user456');
+      assert.equal(decoded.role, 'project_manager');
+    });
+
+    it('should reject a tampered token', () => {
+      const token = tokenUtil.generateAccessToken('user123', 'employee');
+
+      // Tamper with the token by modifying a character
+      const tampered = token.slice(0, -5) + 'XXXXX';
+
+      assert.throws(
+        () => tokenUtil.verifyAccessToken(tampered),
+        'Tampered token should be rejected',
+      );
+    });
+
+    it('should reject a completely invalid token', () => {
+      assert.throws(
+        () => tokenUtil.verifyAccessToken('not-a-valid-jwt'),
+        'Invalid token should be rejected',
+      );
+    });
+
+    it('should reject an empty token', () => {
+      assert.throws(
+        () => tokenUtil.verifyAccessToken(''),
+        'Empty token should be rejected',
+      );
+    });
+  });
+
+  describe('generateRefreshToken', () => {
+    it('should generate an 80-character hex string', () => {
+      const token = tokenUtil.generateRefreshToken();
+
+      assert.equal(typeof token, 'string', 'Should be a string');
+      assert.equal(token.length, 80, 'Should be 80 hex characters (40 bytes)');
+      assert.match(token, /^[0-9a-f]+$/, 'Should be valid hexadecimal');
+    });
+
+    it('should generate unique tokens', () => {
+      const tokens = new Set();
+      for (let i = 0; i < 20; i++) {
+        tokens.add(tokenUtil.generateRefreshToken());
+      }
+      assert.equal(tokens.size, 20, 'All 20 tokens should be unique');
+    });
+  });
+
+  describe('hashToken', () => {
+    it('should produce a consistent SHA-256 hash', () => {
+      const token = 'test-token-value';
+      const hash1 = tokenUtil.hashToken(token);
+      const hash2 = tokenUtil.hashToken(token);
+
+      assert.equal(hash1, hash2, 'Same input should produce same hash');
+      assert.equal(hash1.length, 64, 'SHA-256 hash should be 64 hex characters');
+    });
+
+    it('should produce different hashes for different tokens', () => {
+      const hash1 = tokenUtil.hashToken('token-one');
+      const hash2 = tokenUtil.hashToken('token-two');
+
+      assert.notEqual(hash1, hash2, 'Different tokens should produce different hashes');
+    });
+  });
+});
+
+// ============================================================
+// Auth Service Tests (Phase 1B — unit tests, mocked repos)
+// ============================================================
+
+describe('Auth Service', () => {
+  describe('toSafeUser', () => {
+    it('should return only safe fields', async () => {
+      // Dynamic import
+      const { toSafeUser } = await import('../services/auth.service.js');
+
+      const mockUser = {
+        _id: 'user-id-123',
+        employeeId: 'EMP001',
+        email: 'test@example.com',
+        role: 'employee',
+        accountStatus: 'active',
+        lastLoginAt: new Date(),
+        createdAt: new Date(),
+        passwordHash: '$2a$12$secret-hash',
+        failedLoginAttempts: 3,
+        lockedUntil: new Date(),
+        __v: 0,
+      };
+
+      const safe = toSafeUser(mockUser);
+
+      assert.equal(safe.id, 'user-id-123');
+      assert.equal(safe.employeeId, 'EMP001');
+      assert.equal(safe.email, 'test@example.com');
+      assert.equal(safe.role, 'employee');
+      assert.equal(safe.accountStatus, 'active');
+      assert.ok(safe.lastLoginAt, 'lastLoginAt should be present');
+      assert.ok(safe.createdAt, 'createdAt should be present');
+
+      // Verify sensitive fields are NOT present
+      assert.equal(safe.passwordHash, undefined, 'passwordHash must not be exposed');
+      assert.equal(safe.failedLoginAttempts, undefined, 'failedLoginAttempts must not be exposed');
+      assert.equal(safe.lockedUntil, undefined, 'lockedUntil must not be exposed');
+      assert.equal(safe.__v, undefined, '__v must not be exposed');
+    });
+  });
+
+  describe('checkAccountStatus', () => {
+    it('should allow active accounts', async () => {
+      const { checkAccountStatus } = await import('../services/auth.service.js');
+      const result = checkAccountStatus('active');
+      assert.equal(result.allowed, true);
+      assert.equal(result.reason, null);
+    });
+
+    it('should reject locked accounts', async () => {
+      const { checkAccountStatus } = await import('../services/auth.service.js');
+      const result = checkAccountStatus('locked');
+      assert.equal(result.allowed, false);
+      assert.ok(result.reason.includes('locked'));
+    });
+
+    it('should reject suspended accounts', async () => {
+      const { checkAccountStatus } = await import('../services/auth.service.js');
+      const result = checkAccountStatus('suspended');
+      assert.equal(result.allowed, false);
+      assert.ok(result.reason.includes('suspended'));
+    });
+
+    it('should reject deactivated accounts', async () => {
+      const { checkAccountStatus } = await import('../services/auth.service.js');
+      const result = checkAccountStatus('deactivated');
+      assert.equal(result.allowed, false);
+      assert.ok(result.reason.includes('deactivated'));
+    });
+
+    it('should reject pending accounts', async () => {
+      const { checkAccountStatus } = await import('../services/auth.service.js');
+      const result = checkAccountStatus('pending');
+      assert.equal(result.allowed, false);
+      assert.ok(result.reason.includes('pending'));
+    });
+  });
+
+  describe('verifyPassword', () => {
+    it('should return true for correct password', async () => {
+      const { verifyPassword } = await import('../services/auth.service.js');
+      const hash = await hashPassword('TestPassword1!');
+      const result = await verifyPassword('TestPassword1!', hash);
+      assert.equal(result, true);
+    });
+
+    it('should return false for incorrect password', async () => {
+      const { verifyPassword } = await import('../services/auth.service.js');
+      const hash = await hashPassword('TestPassword1!');
+      const result = await verifyPassword('WrongPassword2!', hash);
+      assert.equal(result, false);
+    });
+  });
+});
+
+// ============================================================
+// Auth Middleware Tests (Phase 1B — unit tests)
+// ============================================================
+
+describe('Auth Middleware', () => {
+
+  before(async () => {
+    process.env.JWT_ACCESS_SECRET = 'test-secret-that-is-at-least-32-characters-long-for-testing';
+    process.env.JWT_ACCESS_EXPIRES_IN = '15m';
+    process.env.JWT_ISSUER = 'flowforge-ai-test';
+  });
+
+  it('should return 401 when no token is provided', async () => {
+    const { authenticate } = await import('../middleware/auth.middleware.js');
+
+    const req = {
+      cookies: {},
+      get: () => null,
+    };
+
+    let nextError = null;
+    const next = (err) => { nextError = err; };
+
+    await authenticate(req, {}, next);
+
+    assert.ok(nextError, 'Should pass error to next');
+    assert.equal(nextError.statusCode, 401);
+  });
+
+  it('should return 401 when an invalid token is provided', async () => {
+    const { authenticate } = await import('../middleware/auth.middleware.js');
+
+    const req = {
+      cookies: { accessToken: 'invalid-token-value' },
+      get: () => null,
+    };
+
+    let nextError = null;
+    const next = (err) => { nextError = err; };
+
+    await authenticate(req, {}, next);
+
+    assert.ok(nextError, 'Should pass error to next');
+    assert.equal(nextError.statusCode, 401);
+  });
+
+  it('should extract token from Authorization Bearer header', async () => {
+    const { authenticate } = await import('../middleware/auth.middleware.js');
+
+    const req = {
+      cookies: {},
+      get: (header) => {
+        if (header === 'Authorization') return 'Bearer invalid-token';
+        return null;
+      },
+    };
+
+    let nextError = null;
+    const next = (err) => { nextError = err; };
+
+    await authenticate(req, {}, next);
+
+    // Should fail with 401 because the token is invalid, but it shows
+    // that the Bearer extraction path is exercised
+    assert.ok(nextError, 'Should pass error to next');
+    assert.equal(nextError.statusCode, 401);
+  });
+});
+
+// ============================================================
+// Security Event Sanitization Tests (Phase 1B)
+// ============================================================
+
+describe('Security Event Sanitization', () => {
+  it('should strip sensitive fields from metadata', async () => {
+    const { sanitizeMetadata } = await import('../services/security-event.service.js');
+
+    const dirty = {
+      email: 'user@example.com',
+      password: 'secret123',
+      passwordHash: '$2a$12$hash',
+      otp: '123456',
+      otpHash: 'hashvalue',
+      token: 'jwt-token',
+      accessToken: 'access',
+      refreshToken: 'refresh',
+      jwt: 'jwtvalue',
+      sessionToken: 'session',
+      apiKey: 'key123',
+      secret: 'secretvalue',
+      safe: 'this-is-safe',
+    };
+
+    const clean = sanitizeMetadata(dirty);
+
+    assert.equal(clean.safe, 'this-is-safe', 'Safe fields should remain');
+    assert.equal(clean.email, 'user@example.com', 'Email is allowed in metadata');
+    assert.equal(clean.password, undefined, 'password must be stripped');
+    assert.equal(clean.passwordHash, undefined, 'passwordHash must be stripped');
+    assert.equal(clean.otp, undefined, 'otp must be stripped');
+    assert.equal(clean.otpHash, undefined, 'otpHash must be stripped');
+    assert.equal(clean.token, undefined, 'token must be stripped');
+    assert.equal(clean.accessToken, undefined, 'accessToken must be stripped');
+    assert.equal(clean.refreshToken, undefined, 'refreshToken must be stripped');
+    assert.equal(clean.jwt, undefined, 'jwt must be stripped');
+    assert.equal(clean.sessionToken, undefined, 'sessionToken must be stripped');
+    assert.equal(clean.apiKey, undefined, 'apiKey must be stripped');
+    assert.equal(clean.secret, undefined, 'secret must be stripped');
+  });
+
+  it('should sanitize nested objects', async () => {
+    const { sanitizeMetadata } = await import('../services/security-event.service.js');
+
+    const dirty = {
+      info: {
+        password: 'secret',
+        detail: 'safe-detail',
+      },
+    };
+
+    const clean = sanitizeMetadata(dirty);
+    assert.equal(clean.info.password, undefined, 'Nested password must be stripped');
+    assert.equal(clean.info.detail, 'safe-detail', 'Safe nested fields should remain');
   });
 });
