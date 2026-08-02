@@ -1,25 +1,23 @@
 import { useEffect } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './stores/auth.store.js';
-
-// Layouts
 import { AuthLayout } from './layouts/AuthLayout.jsx';
 import { ProtectedLayout } from './layouts/ProtectedLayout.jsx';
+import { DashboardLayout } from './layouts/DashboardLayout.jsx';
 
-// Public Auth Pages
+// Auth Pages
 import LoginPage from './pages/auth/LoginPage.jsx';
 import RegisterPage from './pages/auth/RegisterPage.jsx';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage.jsx';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage.jsx';
 
-// Protected / Generic Pages
-import FoundationPage from './pages/FoundationPage.jsx';
+// App Pages
+import { DashboardPage } from './pages/DashboardPage.jsx';
+import { EmployeesPage } from './pages/employees/EmployeesPage.jsx';
+import { EmployeeDetailPage } from './pages/employees/EmployeeDetailPage.jsx';
+import { OrganizationPage } from './pages/organization/OrganizationPage.jsx';
 import UnauthorizedPage from './pages/UnauthorizedPage.jsx';
 
-/**
- * Root application component.
- * Sets up routing with React Router and initializes authentication state.
- */
 const App = () => {
   const { initializeAuth } = useAuthStore();
 
@@ -29,7 +27,7 @@ const App = () => {
   }, [initializeAuth]);
 
   return (
-    <BrowserRouter>
+    <Router>
       <Routes>
         {/* Public Authentication Routes */}
         <Route element={<AuthLayout />}>
@@ -41,14 +39,23 @@ const App = () => {
 
         {/* Protected Application Routes */}
         <Route element={<ProtectedLayout />}>
-          <Route path="/" element={<FoundationPage />} />
-          {/* Add more protected business module routes here in Phase 2 */}
+          <Route element={<DashboardLayout />}>
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/employees" element={<EmployeesPage />} />
+            <Route path="/employees/:id" element={<EmployeeDetailPage />} />
+            <Route path="/organization" element={<OrganizationPage />} />
+          </Route>
+
+          <Route path="/unauthorized" element={<UnauthorizedPage />} />
         </Route>
 
-        {/* Unrestricted Pages */}
-        <Route path="/unauthorized" element={<UnauthorizedPage />} />
+        {/* Redirect root to dashboard */}
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
+        {/* Catch-all 404 */}
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
-    </BrowserRouter>
+    </Router>
   );
 };
 

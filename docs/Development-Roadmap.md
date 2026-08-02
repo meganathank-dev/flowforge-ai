@@ -90,15 +90,28 @@ FlowForge AI is developed in distinct phases. Each phase builds on the previous 
 
 **Goal:** Build the primary management entities.
 
-**Planned Features:**
-- Organization setup
-- Employee profiles and management
-- Department and team structure
-- Project creation and management
-- Task creation, assignment, and tracking
-- Status workflows
+### Phase 2A: Multi-Tenancy & Employee Profiles ✅ (Current)
 
----
+**Goal:** Establish multi-tenant architecture and core employee profiles.
+
+**Deliverables:**
+- Organization model and API (Tenant root)
+- Employee Profile model (Linked to User)
+- Tenant isolation middleware (`req.tenantId`)
+- Super Admin global bypass for tenant scoping
+- Frontend Employee Directory and Profile Pages
+- Frontend Organization Settings Page
+- Dashboard layout with Sidebar and Header (Lucide Icons)
+- Zustand stores for Organization and Employees
+- Backend integration tests for IDOR and Tenant Isolation
+
+### Phase 2B: Departments & Teams
+
+**Goal:** Build department and team structure.
+
+### Phase 2C: Projects & Tasks
+
+**Goal:** Create projects, task assignment, and tracking.
 
 ## Phase 3: Operations
 

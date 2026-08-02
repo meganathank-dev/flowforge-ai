@@ -16,6 +16,18 @@ const { Schema, model } = mongoose;
  */
 const userSchema = new Schema(
   {
+    organizationId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Organization',
+      index: true,
+      default: null,
+    },
+    profileId: {
+      type: Schema.Types.ObjectId,
+      ref: 'EmployeeProfile',
+      index: true,
+      default: null,
+    },
     employeeId: {
       type: String,
       required: [true, 'Employee ID is required'],

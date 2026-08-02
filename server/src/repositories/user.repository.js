@@ -171,7 +171,7 @@ export const updateLoginInfo = async (userId) => {
  * @param {string} [params.accountStatus] - Account status
  * @returns {Promise<object>} The created user document
  */
-export const createUser = async ({ employeeId, email, passwordHash, role, accountStatus }) => {
+export const createUser = async ({ employeeId, email, passwordHash, role, accountStatus, organizationId, profileId }) => {
   const userData = {
     employeeId,
     email,
@@ -180,6 +180,8 @@ export const createUser = async ({ employeeId, email, passwordHash, role, accoun
 
   if (role) userData.role = role;
   if (accountStatus) userData.accountStatus = accountStatus;
+  if (organizationId) userData.organizationId = organizationId;
+  if (profileId) userData.profileId = profileId;
 
   return User.create(userData);
 };

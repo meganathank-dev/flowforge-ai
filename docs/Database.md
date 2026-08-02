@@ -114,6 +114,39 @@ Audit trail for security-related events.
 
 **Indexes:** `user`, `eventType`, compound `{user, eventType}`, compound `{eventType, timestamp}`
 
+## Phase 2A Models
+
+### Organization Model (`organization.model.js`)
+
+Root entity for multi-tenant architecture.
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `name` | String | Required, trimmed, indexed |
+| `domain` | String | Optional, lowercase |
+| `settings` | Object | Tenant specific configuration |
+| `settings.allowDomainUsers` | Boolean | Default: false |
+
+**Indexes:** `name`
+
+### Employee Profile Model (`employee-profile.model.js`)
+
+Stores personal and organizational data for a user.
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `user` | ObjectId (ref: User) | Required, unique |
+| `organizationId` | ObjectId (ref: Organization) | Required for tenant isolation, indexed |
+| `firstName` | String | Required |
+| `lastName` | String | Required |
+| `title` | String | Job title |
+| `department` | ObjectId (ref: Department) | Ref (Phase 2B) |
+| `manager` | ObjectId (ref: User) | Ref to manager |
+| `joinDate` | Date | Default: Date.now |
+| `skills` | [String] | Array of skills |
+
+**Indexes:** `organizationId`, `user`, compound `{organizationId, user}`
+
 ## Indexing Strategy
 
 Indexes will be defined as models are created. General principles:
@@ -122,10 +155,10 @@ Indexes will be defined as models are created. General principles:
 - Compound indexes for common query patterns
 - Unique indexes for fields like email, employee ID
 - TTL indexes for expiring data (e.g., OTP tokens, sessions)
+- **Tenant Isolation**: Queries within a tenant must ALWAYS include `organizationId` in their criteria, thus `organizationId` should be the first field in compound indexes covering tenant-specific queries.
 
 ### Planned Models (Future Phases)
 
-- `Organization` — Company/team structure
 - `Department` — Organizational departments
 - `Team` — Working groups
 - `Project` — Project records
