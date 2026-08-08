@@ -11,18 +11,18 @@ export const Header = ({ onMenuClick }) => {
   };
 
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between w-full h-16 px-4 bg-white/80 backdrop-blur-md border-b border-gray-200 sm:px-6 lg:px-8 dark:bg-gray-900/80 dark:border-gray-800">
+    <header className="sticky top-0 z-30 flex items-center justify-between w-full h-16 px-4 bg-white/80 backdrop-blur-md border-b border-gray-200 sm:px-6 lg:px-8 dark:bg-surface-950/80 dark:border-gray-800">
       <div className="flex items-center gap-4">
         <button
           onClick={onMenuClick}
-          className="p-2 -ml-2 text-gray-500 rounded-md hover:bg-gray-100 lg:hidden dark:text-gray-400 dark:hover:bg-gray-800"
+          className="p-2 -ml-2 text-gray-500 rounded-md hover:bg-gray-100 lg:hidden dark:text-gray-400 dark:hover:bg-surface-800"
         >
           <Menu size={24} />
         </button>
 
         {organization && (
           <div className="hidden sm:flex items-center">
-            <span className="text-sm font-medium text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full">
+            <span className="text-sm font-medium text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-surface-800 px-3 py-1 rounded-full border border-gray-200 dark:border-gray-700">
               {organization.name}
             </span>
           </div>
@@ -36,7 +36,7 @@ export const Header = ({ onMenuClick }) => {
             <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{user?.email}</p>
             <p className="text-xs text-gray-500 capitalize dark:text-gray-400">{user?.role?.replace('_', ' ')}</p>
           </div>
-          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-200">
+          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400">
             <UserIcon size={16} />
           </div>
           <button

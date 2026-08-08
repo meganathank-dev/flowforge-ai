@@ -48,22 +48,22 @@ const ForgotPasswordPage = () => {
     return (
       <Card>
         <CardContent className="pt-8 pb-6 flex flex-col items-center text-center">
-          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
-            <CheckCircle2 className="h-6 w-6 text-green-600" />
+          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/30 mb-4">
+            <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Check your email</h3>
-          <p className="text-sm text-gray-600 mb-6">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Check your email</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
             If an account exists with that email address, we've sent password reset instructions.
           </p>
           <Link
             to="/reset-password"
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors mb-3"
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 transition-colors mb-3"
           >
             Enter OTP Code
           </Link>
           <Link
             to="/login"
-            className="text-sm font-medium text-blue-600 hover:text-blue-500 transition-colors"
+            className="text-sm font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300 transition-colors"
           >
             Return to sign in
           </Link>
@@ -101,8 +101,8 @@ const ForgotPasswordPage = () => {
           </Button>
         </form>
       </CardContent>
-      <CardFooter className="justify-center border-t border-gray-100 pt-6">
-        <Link to="/login" className="text-sm font-medium text-blue-600 hover:text-blue-500 transition-colors">
+      <CardFooter className="justify-center border-t border-gray-200 dark:border-gray-800 pt-6">
+        <Link to="/login" className="text-sm font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300 transition-colors">
           Wait, I remember my password
         </Link>
       </CardFooter>

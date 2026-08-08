@@ -145,10 +145,10 @@ const RegisterPage = () => {
           </form>
         )}
       </CardContent>
-      <CardFooter className="justify-center border-t border-gray-100 pt-6">
-        <p className="text-sm text-gray-600">
+      <CardFooter className="justify-center border-t border-gray-200 dark:border-gray-800 pt-6">
+        <p className="text-sm text-gray-600 dark:text-gray-400">
           Already have an account?{' '}
-          <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500 transition-colors">
+          <Link to="/login" className="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300 transition-colors">
             Sign in
           </Link>
         </p>

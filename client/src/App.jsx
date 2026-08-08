@@ -18,6 +18,8 @@ import { EmployeeDetailPage } from './pages/employees/EmployeeDetailPage.jsx';
 import { OrganizationPage } from './pages/organization/OrganizationPage.jsx';
 import UnauthorizedPage from './pages/UnauthorizedPage.jsx';
 
+import { LandingPage } from './pages/LandingPage.jsx';
+
 const App = () => {
   const { initializeAuth } = useAuthStore();
 
@@ -29,6 +31,9 @@ const App = () => {
   return (
     <Router>
       <Routes>
+        {/* Public Landing Page */}
+        <Route path="/" element={<LandingPage />} />
+
         {/* Public Authentication Routes */}
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<LoginPage />} />
@@ -48,9 +53,6 @@ const App = () => {
 
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
         </Route>
-
-        {/* Redirect root to dashboard */}
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
         {/* Catch-all 404 */}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />

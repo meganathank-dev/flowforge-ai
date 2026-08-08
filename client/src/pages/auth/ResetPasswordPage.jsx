@@ -142,8 +142,8 @@ const ResetPasswordPage = () => {
           </form>
         )}
       </CardContent>
-      <CardFooter className="justify-center border-t border-gray-100 pt-6">
-        <Link to="/login" className="text-sm font-medium text-blue-600 hover:text-blue-500 transition-colors">
+      <CardFooter className="justify-center border-t border-gray-200 dark:border-gray-800 pt-6">
+        <Link to="/login" className="text-sm font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300 transition-colors">
           Return to sign in
         </Link>
       </CardFooter>
