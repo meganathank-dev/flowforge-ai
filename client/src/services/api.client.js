@@ -4,9 +4,8 @@ import { config } from '../config/index.js';
 /**
  * Pre-configured Axios instance for API communication.
  *
- * Architecture is prepared for future authentication interceptors
- * (e.g., attaching access tokens, refreshing tokens on 401),
- * but NO authentication logic is implemented yet.
+ * Configured with authentication interceptors for automatic
+ * token refreshing on 401 responses.
  */
 const apiClient = axios.create({
   baseURL: config.apiBaseUrl,
@@ -17,14 +16,23 @@ const apiClient = axios.create({
   withCredentials: true,
 });
 
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
 // ── Request interceptor ──────────────────────────────────────────
 apiClient.interceptors.request.use(
   (requestConfig) => {
-    // Future: Attach access token from auth store
-    // const token = useAuthStore.getState().accessToken;
-    // if (token) {
-    //   requestConfig.headers.Authorization = `Bearer ${token}`;
-    // }
     return requestConfig;
   },
   (error) => {
@@ -37,11 +45,40 @@ apiClient.interceptors.response.use(
   (response) => {
     return response.data;
   },
-  (error) => {
-    // Future: Handle 401 token refresh
-    // if (error.response?.status === 401) {
-    //   // Attempt token refresh
-    // }
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !originalRequest.url.includes('/auth/refresh')
+    ) {
+      if (isRefreshing) {
+        return new Promise(function (resolve, reject) {
+          failedQueue.push({ resolve, reject });
+        })
+          .then(() => {
+            return apiClient(originalRequest);
+          })
+          .catch((err) => {
+            return Promise.reject(err);
+          });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        await axios.post(`${config.apiBaseUrl}/auth/refresh`, {}, { withCredentials: true });
+        isRefreshing = false;
+        processQueue(null);
+        return apiClient(originalRequest);
+      } catch (err) {
+        isRefreshing = false;
+        processQueue(err);
+        window.dispatchEvent(new Event('auth:logout'));
+      }
+    }
 
     const normalizedError = {
       message: error.response?.data?.message || error.message || 'An unexpected error occurred',

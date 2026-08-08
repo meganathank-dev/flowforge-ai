@@ -4,6 +4,7 @@ import { authenticate } from '../../middleware/auth.middleware.js';
 import { authorizeRoles } from '../../middleware/authorize.middleware.js';
 import { requireOrganization } from '../../middleware/tenant.middleware.js';
 import { createEmployeeSchema, getEmployeesQuerySchema } from '../../validators/employee.validator.js';
+import { objectIdSchema } from '../../validators/common.validator.js';
 import { createEmployee, getEmployees, getEmployeeById } from '../../controllers/employee-profile.controller.js';
 import { ROLES } from '../../constants/roles.js';
 
@@ -15,7 +16,7 @@ router.use(requireOrganization);
 
 // ── Read Routes (All Tenant Users) ──────────────────────────────
 router.get('/', validate({ query: getEmployeesQuerySchema }), getEmployees);
-router.get('/:id', getEmployeeById);
+router.get('/:id', validate({ params: objectIdSchema }), getEmployeeById);
 
 // ── Write Routes (Admin/Managers Only) ──────────────────────────
 router.post(
